@@ -244,6 +244,12 @@ const createCardOrder = async (session) => {
 
   const cart = await cartModel.findById(cartId);
   const user = await User.findOne({ email: session.email });
+  
+  console.log("user", user);
+  console.log("cartId", cartId);
+  console.log("shippingAddress", shippingAddress);
+  console.log("orderPrice", orderPrice);
+  console.log("cart", cart);
 
   // 3) Create order with default paymentMethodType cash
   const order = await Order.create({
