@@ -1,5 +1,7 @@
 const stripe = require("stripe")(process.env.stripe_secret_key);
 const asyncHandler = require("express-async-handler");
+const { buffer } = require("micro");
+
 const factory = require("./handlersFactory");
 const ApiError = require("../utils/apiError");
 
@@ -190,7 +192,7 @@ const createCardOrder = async (session) => {
     totalOrderPrice: oderPrice,
     isPaid: true,
     paidAt: Date.now(),
-    paymentMethodType: 'card',
+    paymentMethodType: "card",
   });
 
   // 4) After creating order, decrement product quantity, increment product sold
@@ -212,20 +214,23 @@ const createCardOrder = async (session) => {
 // @route   POST /webhook-checkout
 // @access  Protected/User
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
-  const sig = req.headers['stripe-signature'];
+  const buf = await buffer(req);
+
+  const sig = req.headers["stripe-signature"];
 
   let event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      req.body,
+      // req.body,
+      buf.toString(),
       sig,
       process.env.stripe_webhook_secret_key
     );
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === "checkout.session.completed") {
     //  Create order
     createCardOrder(event.data.object);
   }
@@ -244,7 +249,7 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
 
 //   const cart = await cartModel.findById(cartId);
 //   const user = await User.findOne({ email: session.email });
-  
+
 //   console.log("user", user);
 //   console.log("cartId", cartId);
 //   console.log("shippingAddress", shippingAddress);
