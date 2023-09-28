@@ -227,15 +227,16 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
       sig,
       process.env.stripe_webhook_secret_key
     );
+    if (event.type === "checkout.session.completed") {
+      //  Create order
+      createCardOrder(event.data.object);
+    }
+
+    res.status(200).json({ received: true });
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
-  if (event.type === "checkout.session.completed") {
-    //  Create order
-    createCardOrder(event.data.object);
-  }
-
-  res.status(200).json({ received: true });
+  
 });
 
 // @desc    This webhook will run when stripe payment success paid
