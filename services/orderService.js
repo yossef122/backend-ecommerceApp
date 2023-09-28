@@ -216,31 +216,14 @@ const createCardOrder = async (session) => {
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   // const buf = await buffer(req);
 
-  // const sig = req.headers["stripe-signature"];
-  const payload = {
-    id: "evt_test_webhook",
-    object: "event",
-  };
+  const sig = req.headers["stripe-signature"];
 
-  const payloadString = JSON.stringify(payload, null, 2);
-  const secret = "whsec_test_secret";
-
-  const header = stripe.webhooks.generateTestHeaderString({
-    payload: payloadString,
-    secret,
-  });
   let event;
 
   try {
-    // event = stripe.webhooks.constructEvent(
-    //   req.body,
-    //   // buf.toString(),
-    //   sig,
-    //   process.env.stripe_webhook_secret_key
-    // );
     event = stripe.webhooks.constructEvent(
-      payloadString,
-      header,
+      req.body,
+      sig,
       process.env.stripe_webhook_secret_key
     );
     if (event.type === "checkout.session.completed") {
