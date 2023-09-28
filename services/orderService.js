@@ -1,12 +1,12 @@
 const stripe = require("stripe")(process.env.stripe_secret_key);
-const asyncHandler = require('express-async-handler');
-const factory = require('./handlersFactory');
-const ApiError = require('../utils/apiError');
+const asyncHandler = require("express-async-handler");
+const factory = require("./handlersFactory");
+const ApiError = require("../utils/apiError");
 
-// const User = require('../models/userModel');
-const Product = require('../models/productModel');
-const Cart = require('../models/cartModel');
-const Order = require('../models/orderModel');
+const User = require("../models/userModel");
+const Product = require("../models/productModel");
+const Cart = require("../models/cartModel");
+const Order = require("../models/orderModel");
 
 // @desc    create cash order
 // @route   POST /api/v1/orders/cartId
@@ -53,11 +53,11 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     await Cart.findByIdAndDelete(req.params.cartId);
   }
 
-  res.status(201).json({ status: 'success', data: order });
+  res.status(201).json({ status: "success", data: order });
 });
 
 exports.filterOrderForLoggedUser = asyncHandler(async (req, res, next) => {
-  if (req.user.role === 'user') req.filterObj = { user: req.user._id };
+  if (req.user.role === "user") req.filterObj = { user: req.user._id };
   next();
 });
 // @desc    Get all orders
@@ -90,7 +90,7 @@ exports.updateOrderToPaid = asyncHandler(async (req, res, next) => {
 
   const updatedOrder = await order.save();
 
-  res.status(200).json({ status: 'success', data: updatedOrder });
+  res.status(200).json({ status: "success", data: updatedOrder });
 });
 
 // @desc    Update order delivered status
@@ -113,7 +113,7 @@ exports.updateOrderToDelivered = asyncHandler(async (req, res, next) => {
 
   const updatedOrder = await order.save();
 
-  res.status(200).json({ status: 'success', data: updatedOrder });
+  res.status(200).json({ status: "success", data: updatedOrder });
 });
 
 // @desc    Get checkout session from stripe and send it as response
@@ -170,7 +170,7 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   });
 
   // 4) send session to response
-  res.status(200).json({ status: 'success', session });
+  res.status(200).json({ status: "success", session });
 });
 
 // const createCardOrder = async (session) => {
@@ -231,3 +231,23 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
 
 //   res.status(200).json({ received: true });
 // });
+
+exports.webhookCheckout = asyncHandler(async (req, res, next) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.stripe_webhook_secret_key
+    );
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return next(err);
+  }
+  if(event.type === 'checkout.session.completed') {
+    console.log("creat order here....")
+  }
+});
